@@ -224,6 +224,40 @@ function writeStoredData(data) {
   }
 }
 
+// --- Firebase REST helpers ---
+
+function firebaseUrl() {
+  return `${moduleConfig.apiBaseUrl}.json`;
+}
+
+async function firebaseGet() {
+  const response = await fetch(firebaseUrl());
+  if (!response.ok) throw new Error(`Firebase GET fallo: ${response.status}`);
+  return response.json();
+}
+
+async function firebasePatch(partial) {
+  const response = await fetch(firebaseUrl(), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(partial),
+  });
+  if (!response.ok) throw new Error(`Firebase PATCH fallo: ${response.status}`);
+  return response.json();
+}
+
+async function firebasePut(data) {
+  const response = await fetch(firebaseUrl(), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error(`Firebase PUT fallo: ${response.status}`);
+  return response.json();
+}
+
+// --- Public API ---
+
 export async function getModuleData() {
   if (moduleConfig.useMocks || !moduleConfig.apiBaseUrl) {
     const stored = readStoredData();
@@ -234,38 +268,78 @@ export async function getModuleData() {
     return Promise.resolve(initialData);
   }
 
-  const response = await fetch(moduleConfig.apiBaseUrl);
-  if (!response.ok) {
-    throw new Error("No se pudo cargar la informacion del modulo.");
+  const remote = await firebaseGet();
+
+  if (!remote) {
+    // Primera vez: inicializar Firebase con los datos de ejemplo
+    const initialData = getInitialData();
+    await firebasePut(initialData);
+    writeStoredData(initialData);
+    return initialData;
   }
-  return response.json();
+
+  writeStoredData(remote);
+  return remote;
 }
 
 export async function saveNextAgenda(points) {
+  if (moduleConfig.useMocks || !moduleConfig.apiBaseUrl) {
+    const data = readStoredData() || getInitialData();
+    data.nextAgenda.points = cloneData(points);
+    writeStoredData(data);
+    return Promise.resolve(data);
+  }
+
+  await firebasePatch({ nextAgenda: { points: cloneData(points) } });
+
   const data = readStoredData() || getInitialData();
   data.nextAgenda.points = cloneData(points);
   writeStoredData(data);
-  return Promise.resolve(data);
+  return data;
 }
 
 export async function savePreviousMeeting(previousMeeting) {
+  if (moduleConfig.useMocks || !moduleConfig.apiBaseUrl) {
+    const data = readStoredData() || getInitialData();
+    data.previousMeeting = cloneData(previousMeeting);
+    writeStoredData(data);
+    return Promise.resolve(data);
+  }
+
+  await firebasePatch({ previousMeeting: cloneData(previousMeeting) });
+
   const data = readStoredData() || getInitialData();
   data.previousMeeting = cloneData(previousMeeting);
   writeStoredData(data);
-  return Promise.resolve(data);
+  return data;
 }
 
 export async function saveMembers(members) {
+  if (moduleConfig.useMocks || !moduleConfig.apiBaseUrl) {
+    const data = readStoredData() || getInitialData();
+    data.members = cloneData(members);
+    writeStoredData(data);
+    return Promise.resolve(data);
+  }
+
+  await firebasePatch({ members: cloneData(members) });
+
   const data = readStoredData() || getInitialData();
   data.members = cloneData(members);
   writeStoredData(data);
-  return Promise.resolve(data);
+  return data;
 }
 
 export async function archivePreviousMeeting() {
-  const data = readStoredData() || getInitialData();
-  const previousMeeting = data.previousMeeting;
+  // For archive we need current history, so always read from source of truth
+  let data;
+  if (moduleConfig.useMocks || !moduleConfig.apiBaseUrl) {
+    data = readStoredData() || getInitialData();
+  } else {
+    data = await firebaseGet() || readStoredData() || getInitialData();
+  }
 
+  const previousMeeting = data.previousMeeting;
   const attendeeCount = (previousMeeting.attendees || []).length;
 
   const archiveEntry = {
@@ -285,8 +359,20 @@ export async function archivePreviousMeeting() {
     })),
   };
 
-  data.history.unshift(archiveEntry);
-  data.previousMeeting.status = "Archivada";
+  const newHistory = [archiveEntry, ...(data.history || [])];
+  const updatedPreviousMeeting = { ...cloneData(previousMeeting), status: "Archivada" };
+
+  if (moduleConfig.useMocks || !moduleConfig.apiBaseUrl) {
+    data.history = newHistory;
+    data.previousMeeting = updatedPreviousMeeting;
+    writeStoredData(data);
+    return Promise.resolve(data);
+  }
+
+  await firebasePatch({ history: newHistory, previousMeeting: updatedPreviousMeeting });
+
+  data.history = newHistory;
+  data.previousMeeting = updatedPreviousMeeting;
   writeStoredData(data);
-  return Promise.resolve(data);
+  return data;
 }
