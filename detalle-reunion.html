@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle de Reunion | Escuela Dandelion</title>
+  <link rel="stylesheet" href="./styles/tokens.css?v=20260422-2">
+  <link rel="stylesheet" href="./styles/layout.css?v=20260422-2">
+  <link rel="stylesheet" href="./styles/module.css?v=20260422-2">
+</head>
+<body data-page="meeting-detail">
+  <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menu">☰</button>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🌻</div>
+      <div>
+        <div class="logo-text">Gestion de Reuniones</div>
+        <div class="logo-sub">Escuela Dandelion</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">Inicio</div>
+    <a href="./index.html" class="sidebar-link">Inicio</a>
+    <a href="./index.html" class="sidebar-link sub">Proxima reunion</a>
+    <a href="./ultima-reunion.html" class="sidebar-link sub">Ultima reunion</a>
+    <a href="./historico.html" class="sidebar-link current sub">Memoria institucional</a>
+    <a href="./miembros.html" class="sidebar-link sub">Miembros</a>
+  </aside>
+
+  <main class="main-shell">
+    <div class="topbar">
+      <div class="breadcrumb">
+        <a href="#">Wiki</a>
+        <span class="sep">›</span>
+        <a href="#">Escuela Dandelion</a>
+        <span class="sep">›</span>
+        <a href="./historico.html">Memoria institucional</a>
+        <span class="sep">›</span>
+        <span>Detalle de reunion</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <header class="page-header page-header-compact">
+        <h1 class="page-title" id="meetingDetailTitle">Detalle de reunion</h1>
+        <p class="page-tagline" id="meetingDetailDate"></p>
+        <div class="agenda-actions agenda-actions-top">
+          <a class="action-btn" id="printMeetingLink" href="./print-acta.html" target="_blank" rel="noopener noreferrer">Version para imprimir</a>
+        </div>
+      </header>
+
+      <section class="section">
+        <div class="resolution-list" id="meetingDetailList"></div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./js/app.js?v=20260422-2"></script>
+</body>
+</html>

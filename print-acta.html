@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acta Imprimible</title>
+  <link rel="stylesheet" href="./styles/tokens.css?v=20260422-2">
+  <link rel="stylesheet" href="./styles/layout.css?v=20260422-2">
+  <link rel="stylesheet" href="./styles/module.css?v=20260422-2">
+</head>
+<body data-page="print-meeting">
+  <main class="print-shell">
+    <div class="print-actions no-print">
+      <button class="action-btn action-btn-primary" id="printNowBtn" type="button">Imprimir / Guardar PDF</button>
+      <a class="action-btn" href="./historico.html">Volver</a>
+    </div>
+    <header class="print-header">
+      <div class="print-kicker">Escuela Dandelion</div>
+      <h1 id="printMeetingTitle">Acta de reunion</h1>
+      <p id="printMeetingSubtitle"></p>
+    </header>
+    <section class="print-meta" id="printMeetingMeta"></section>
+    <section class="print-list" id="printMeetingList"></section>
+  </main>
+  <script type="module" src="./js/app.js?v=20260422-2"></script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memoria Institucional | Escuela Dandelion</title>
+  <link rel="stylesheet" href="./styles/tokens.css?v=20260422-2">
+  <link rel="stylesheet" href="./styles/layout.css?v=20260422-2">
+  <link rel="stylesheet" href="./styles/module.css?v=20260422-2">
+</head>
+<body data-page="history">
+  <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menu">☰</button>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🌻</div>
+      <div>
+        <div class="logo-text">Gestion de Reuniones</div>
+        <div class="logo-sub">Escuela Dandelion</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">Inicio</div>
+    <a href="./index.html" class="sidebar-link">Inicio</a>
+    <a href="./index.html" class="sidebar-link sub">Proxima reunion</a>
+    <a href="./ultima-reunion.html" class="sidebar-link sub">Ultima reunion</a>
+    <a href="./historico.html" class="sidebar-link current sub">Memoria institucional</a>
+    <a href="./miembros.html" class="sidebar-link sub">Miembros</a>
+  </aside>
+
+  <main class="main-shell">
+    <div class="topbar">
+      <div class="breadcrumb">
+        <a href="#">Wiki</a>
+        <span class="sep">›</span>
+        <a href="#">Escuela Dandelion</a>
+        <span class="sep">›</span>
+        <span>Memoria institucional</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <header class="page-header page-header-compact">
+        <h1 class="page-title">Memoria institucional</h1>
+        <p class="page-tagline">Archivo de reuniones. Ingresar a cada acta para ver punto por punto su tratamiento y comentarios.</p>
+      </header>
+
+      <section class="section">
+        <div class="history-list" id="historyList"></div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./js/app.js?v=20260422-2"></script>
+</body>
+</html>

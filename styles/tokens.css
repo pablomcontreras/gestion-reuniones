@@ -1,0 +1,26 @@
+:root {
+  --green: #3a7d44;
+  --green-dark: #2d6435;
+  --green-light: #e8f5e9;
+  --green-mid: #c8e6c9;
+  --earth: #6d4c41;
+  --earth-light: #efebe9;
+  --amber: #f59e0b;
+  --amber-light: #fef3c7;
+  --blue: #1976d2;
+  --blue-light: #e3f2fd;
+  --purple: #6d28d9;
+  --purple-light: #ede9fe;
+  --red: #c62828;
+  --red-light: #fdecea;
+  --text: #1a1a2e;
+  --muted: #6b7280;
+  --border: #e0e0e0;
+  --bg: #f7f8fa;
+  --card: #ffffff;
+  --shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --sidebar-w: 260px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}

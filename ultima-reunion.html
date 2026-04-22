@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ultima Reunion | Escuela Dandelion</title>
+  <link rel="stylesheet" href="./styles/tokens.css?v=20260422-3">
+  <link rel="stylesheet" href="./styles/layout.css?v=20260422-3">
+  <link rel="stylesheet" href="./styles/module.css?v=20260422-3">
+</head>
+<body data-page="last-meeting">
+  <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menu">☰</button>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🌻</div>
+      <div>
+        <div class="logo-text">Gestion de Reuniones</div>
+        <div class="logo-sub">Escuela Dandelion</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">Inicio</div>
+    <a href="./index.html" class="sidebar-link">Inicio</a>
+    <a href="./index.html" class="sidebar-link sub">Proxima reunion</a>
+    <a href="./ultima-reunion.html" class="sidebar-link current sub">Ultima reunion</a>
+    <a href="./historico.html" class="sidebar-link sub">Memoria institucional</a>
+    <a href="./miembros.html" class="sidebar-link sub">Miembros</a>
+  </aside>
+
+  <main class="main-shell">
+    <div class="topbar">
+      <div class="breadcrumb">
+        <a href="#">Wiki</a>
+        <span class="sep">›</span>
+        <a href="#">Escuela Dandelion</a>
+        <span class="sep">›</span>
+        <span>Ultima reunion</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <header class="page-header page-header-compact">
+        <h1 class="page-title">Ultima reunion — Cargar minuta</h1>
+        <p class="page-tagline">Registrar asistentes, acuerdos y accionables de la reunion mas reciente.</p>
+      </header>
+
+      <section class="section">
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="grid-2">
+          <article class="panel-card">
+            <div class="panel-title">Datos de la reunion</div>
+            <div class="detail-list" id="previousMeetingMeta"></div>
+            <div class="panel-subtitle" style="margin-top:16px;">Asistentes</div>
+            <div class="attendees-list" id="attendeesList"></div>
+            <div class="agenda-actions" style="margin-top:10px;">
+              <button class="action-btn" id="addAttendeeBtn" type="button">Agregar asistente</button>
+            </div>
+          </article>
+
+          <article class="panel-card">
+            <div class="panel-title">Accionables pendientes</div>
+            <ul class="checklist" id="taskList"></ul>
+          </article>
+        </div>
+
+        <article class="panel-card">
+          <div class="panel-title">Tratamiento de puntos</div>
+          <div class="resolution-list" id="resolutionList"></div>
+          <div class="agenda-actions">
+            <button class="action-btn action-btn-primary" id="saveMinutesBtn" type="button">Guardar minuta</button>
+            <button class="action-btn" id="archiveMeetingBtn" type="button">Archivar en memoria institucional</button>
+            <a class="action-btn" href="./print-acta.html?source=last" target="_blank" rel="noopener noreferrer">Version para imprimir</a>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./js/app.js?v=20260422-3"></script>
+</body>
+</html>
