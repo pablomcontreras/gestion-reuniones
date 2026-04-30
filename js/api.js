@@ -363,6 +363,7 @@ function normalizeHistoryMeeting(meeting) {
     status: meeting?.status || "",
     motivo: meeting?.motivo || "",
     items: (meeting?.items || []).map(normalizeHistoryItemFromMeeting),
+    changeLog: cloneData(meeting?.changeLog || []),
   };
 }
 
@@ -579,6 +580,32 @@ export async function saveMembers(members) {
   return data;
 }
 
+export async function saveHistoryMeeting(meetingId, updatedMeeting) {
+  let data;
+  if (moduleConfig.useMocks || !moduleConfig.apiBaseUrl) {
+    data = normalizeModuleData(readStoredData() || getInitialData());
+  } else {
+    data = normalizeModuleData(await firebaseGet() || readStoredData() || getInitialData());
+  }
+
+  const normalizedMeeting = normalizeHistoryMeeting(updatedMeeting);
+  const history = (data.history || []).map((meeting) =>
+    meeting.id === meetingId ? normalizedMeeting : meeting,
+  );
+
+  if (moduleConfig.useMocks || !moduleConfig.apiBaseUrl) {
+    data.history = history;
+    writeStoredData(data);
+    return Promise.resolve(data);
+  }
+
+  await firebasePatch({ history });
+
+  data.history = history;
+  writeStoredData(data);
+  return data;
+}
+
 export async function archivePreviousMeeting() {
   // For archive we need current history, so always read from source of truth
   let data;
@@ -607,6 +634,7 @@ export async function archivePreviousMeeting() {
       resolution: item.resolution || "",
       actionables: cloneData(item.actionables || []),
     })),
+    changeLog: [],
   };
 
   const newHistory = [archiveEntry, ...(data.history || [])];

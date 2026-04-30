@@ -45,6 +45,7 @@ Reglas de negocio activas:
 - Agenda de miembros reutilizada para asistentes y responsables de accionables
 - Actas con separacion por punto entre `Comentarios`, `Resolucion / salida` y `Accionables`
 - Versiones imprimibles preparadas para papel / PDF
+- `Memoria institucional` editable de forma controlada desde el detalle de cada reunion, con log de modificaciones
 
 ## Documentacion operativa
 

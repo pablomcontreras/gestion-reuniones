@@ -485,6 +485,11 @@
   color: #374151;
 }
 
+.detail-note {
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .detail-inline {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -523,6 +528,41 @@
 
 .member-row {
   grid-template-columns: 1fr 1fr 1fr 36px;
+}
+
+.check-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.history-log {
+  display: grid;
+  gap: 12px;
+}
+
+.history-log-entry {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+.history-log-entry p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.history-log-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .resolution-block + .resolution-block {

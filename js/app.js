@@ -1,4 +1,4 @@
-import { archivePreviousMeeting, getModuleData, saveMembers, saveNextAgenda, savePreviousMeeting } from "./api.js";
+import { archivePreviousMeeting, getModuleData, saveHistoryMeeting, saveMembers, saveNextAgenda, savePreviousMeeting } from "./api.js";
 import { moduleConfig } from "./config.js";
 
 const elements = {
@@ -19,6 +19,10 @@ const elements = {
   meetingDetailTitle: document.getElementById("meetingDetailTitle"),
   meetingDetailDate: document.getElementById("meetingDetailDate"),
   meetingDetailList: document.getElementById("meetingDetailList"),
+  meetingEditBtn: document.getElementById("meetingEditBtn"),
+  meetingCancelBtn: document.getElementById("meetingCancelBtn"),
+  meetingSaveBtn: document.getElementById("meetingSaveBtn"),
+  meetingChangeLog: document.getElementById("meetingChangeLog"),
   printMeetingLink: document.getElementById("printMeetingLink"),
   membersList: document.getElementById("membersList"),
   printNowBtn: document.getElementById("printNowBtn"),
@@ -42,6 +46,9 @@ let agendaState = [];
 let previousMeetingState = null;
 let membersState = [];
 let historyState = [];
+let historyDetailState = null;
+let historyDetailOriginalState = null;
+let historyDetailEditMode = false;
 
 const HISTORY_PAGE_SIZE = 5;
 let historyCurrentPage = 1;
@@ -51,6 +58,67 @@ let historyCurrentPage = 1;
 function getMemberName(memberId) {
   const member = membersState.find((item) => item.id === memberId);
   return member ? `${member.firstName} ${member.lastName}`.trim() : "A definir";
+}
+
+function deepClone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function getQuorumLabel(attendees = []) {
+  return `${attendees.length} ${attendees.length === 1 ? "asistente" : "asistentes"}`;
+}
+
+function formatAuditTimestamp(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("es-AR", {
+    timeZone: moduleConfig.meetingTimezone,
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function summarizeMeetingChanges(before, after) {
+  const changes = [];
+
+  if ((before.title || "") !== (after.title || "")) changes.push("titulo de la reunion");
+  if ((before.date || "") !== (after.date || "")) changes.push("fecha");
+  if ((before.startTime || "") !== (after.startTime || "")) changes.push("hora");
+  if ((before.status || "") !== (after.status || "")) changes.push("estado");
+  if ((before.motivo || "") !== (after.motivo || "")) changes.push("motivo");
+
+  if (JSON.stringify(before.attendees || []) !== JSON.stringify(after.attendees || [])) {
+    changes.push("asistentes");
+  }
+
+  const maxItems = Math.max((before.items || []).length, (after.items || []).length);
+  for (let index = 0; index < maxItems; index += 1) {
+    const prevItem = before.items?.[index];
+    const nextItem = after.items?.[index];
+    if (!prevItem && nextItem) {
+      changes.push(`punto ${index + 1}`);
+      continue;
+    }
+    if (prevItem && !nextItem) {
+      changes.push(`punto ${index + 1}`);
+      continue;
+    }
+    if (!prevItem || !nextItem) continue;
+
+    if ((prevItem.title || "") !== (nextItem.title || "")) changes.push(`punto ${index + 1}: titulo`);
+    if ((prevItem.status || "") !== (nextItem.status || "")) changes.push(`punto ${index + 1}: estado`);
+    if ((prevItem.comments || "") !== (nextItem.comments || "")) changes.push(`punto ${index + 1}: comentarios`);
+    if ((prevItem.resolution || "") !== (nextItem.resolution || "")) changes.push(`punto ${index + 1}: resolucion`);
+    if (JSON.stringify(prevItem.actionables || []) !== JSON.stringify(nextItem.actionables || [])) {
+      changes.push(`punto ${index + 1}: accionables`);
+    }
+  }
+
+  return [...new Set(changes)];
 }
 
 function getZonedDateParts(date, timeZone) {
@@ -825,12 +893,18 @@ function renderMeetingDetail(history) {
 
   const searchParams = new URLSearchParams(window.location.search);
   const meetingId = searchParams.get("id");
-  const meeting = history.find((item) => item.id === meetingId) || history[0];
+  const sourceMeeting = historyDetailState || history.find((item) => item.id === meetingId) || history[0];
+  if (!historyDetailState && sourceMeeting) {
+    historyDetailState = deepClone(sourceMeeting);
+    historyDetailOriginalState = deepClone(sourceMeeting);
+  }
+  const meeting = historyDetailState;
 
   if (!meeting) {
     elements.meetingDetailTitle.textContent = "Acta no encontrada";
     elements.meetingDetailDate.textContent = "";
     elements.meetingDetailList.innerHTML = "";
+    if (elements.meetingChangeLog) elements.meetingChangeLog.innerHTML = "";
     return;
   }
 
@@ -842,15 +916,70 @@ function renderMeetingDetail(history) {
 
   let metaHtml = "";
   const hasAttendees = meeting.attendees && meeting.attendees.length > 0;
-  if (hasAttendees || meeting.quorum || meeting.status) {
-    const attendeeNames = (meeting.attendees || [])
-      .map((a) => {
-        const name = getMemberName(a.memberId);
-        return name !== "A definir" ? `${name} (${a.mode})` : null;
-      })
-      .filter(Boolean)
-      .join(", ");
+  const attendeeNames = (meeting.attendees || [])
+    .map((a) => {
+      const name = getMemberName(a.memberId);
+      return name !== "A definir" ? `${name} (${a.mode})` : null;
+    })
+    .filter(Boolean)
+    .join(", ");
 
+  if (historyDetailEditMode) {
+    metaHtml = `
+      <article class="panel-card" style="margin-bottom:14px;">
+        <div class="detail-list">
+          <label class="detail-item">
+            <strong>Titulo</strong>
+            <input class="agenda-input" id="history-title" type="text" value="${meeting.title || ""}">
+          </label>
+          <div class="detail-inline">
+            <label class="detail-item">
+              <strong>Fecha</strong>
+              <input class="agenda-input" id="history-date" type="text" value="${meeting.date || ""}">
+            </label>
+            <label class="detail-item">
+              <strong>Hora</strong>
+              <input class="agenda-input" id="history-start-time" type="text" value="${meeting.startTime || ""}">
+            </label>
+          </div>
+          <label class="detail-item">
+            <strong>Estado</strong>
+            <input class="agenda-input" id="history-status" type="text" value="${meeting.status || ""}">
+          </label>
+          <label class="detail-item">
+            <strong>Motivo</strong>
+            <textarea class="agenda-input agenda-textarea compact-textarea" id="history-motivo" rows="3">${meeting.motivo || ""}</textarea>
+          </label>
+          <div class="detail-item">
+            <strong>Asistentes</strong>
+            <div class="attendees-list history-attendees-list">
+              ${(meeting.attendees || [])
+                .map(
+                  (attendee, index) => `
+                    <div class="attendee-row">
+                      <select class="agenda-input" id="history-attendee-member-${index}">
+                        <option value="">Seleccionar miembro</option>
+                        ${memberOptions(attendee.memberId)}
+                      </select>
+                      <select class="agenda-input" id="history-attendee-mode-${index}">
+                        <option value="Presencial" ${attendee.mode === "Presencial" ? "selected" : ""}>Presencial</option>
+                        <option value="Remota" ${attendee.mode === "Remota" ? "selected" : ""}>Remota</option>
+                      </select>
+                      <button class="icon-btn" type="button" data-remove-history-attendee="${index}" aria-label="Eliminar asistente">×</button>
+                    </div>
+                  `,
+                )
+                .join("")}
+            </div>
+            <div class="agenda-actions" style="margin-top:8px;">
+              <button class="action-btn" id="addHistoryAttendeeBtn" type="button">Agregar asistente</button>
+            </div>
+            <span class="detail-note">Quorum actual: ${getQuorumLabel(meeting.attendees || [])}</span>
+          </div>
+        </div>
+      </article>
+    `;
+  } else if (hasAttendees || meeting.quorum || meeting.status) {
     metaHtml = `
       <article class="panel-card" style="margin-bottom:14px;">
         <div class="detail-list">
@@ -863,9 +992,69 @@ function renderMeetingDetail(history) {
     `;
   }
 
-  const itemsHtml = meeting.items
-    .map((item) => {
+  const itemsHtml = (meeting.items || [])
+    .map((item, itemIdx) => {
       const hasActionables = item.actionables && item.actionables.length > 0;
+      if (historyDetailEditMode) {
+        return `
+          <article class="resolution-card">
+            <div class="resolution-head">
+              <input class="agenda-input agenda-input-title" id="history-item-title-${itemIdx}" type="text" value="${item.title || ""}">
+              <select class="agenda-input resolution-select" id="history-item-status-${itemIdx}">
+                <option value="Tratado" ${item.status === "Tratado" ? "selected" : ""}>Tratado</option>
+                <option value="No tratado" ${item.status === "No tratado" ? "selected" : ""}>No tratado</option>
+                <option value="Postergado" ${item.status === "Postergado" ? "selected" : ""}>Postergado</option>
+              </select>
+            </div>
+            <div class="resolution-block">
+              <div class="resolution-label">Comentarios</div>
+              <textarea class="agenda-input agenda-textarea compact-textarea" id="history-item-comments-${itemIdx}" rows="3">${item.comments || ""}</textarea>
+            </div>
+            <div class="resolution-block">
+              <div class="resolution-label">Resolucion</div>
+              <textarea class="agenda-input agenda-textarea compact-textarea" id="history-item-resolution-${itemIdx}" rows="3">${item.resolution || ""}</textarea>
+            </div>
+            <div class="resolution-block">
+              <div class="resolution-label-row">
+                <span class="resolution-label">Accionables</span>
+                <button class="action-btn" type="button" data-add-history-actionable="${itemIdx}">Agregar</button>
+              </div>
+              <div class="actionables-list">
+                ${(item.actionables || [])
+                  .map(
+                    (actionable, actionableIdx) => `
+                      <div class="actionable-row">
+                        <input
+                          class="agenda-input"
+                          id="history-actionable-desc-${itemIdx}-${actionableIdx}"
+                          type="text"
+                          value="${actionable.description || ""}"
+                          placeholder="Describir accionable..."
+                        >
+                        <select class="agenda-input actionable-member-select" id="history-actionable-member-${itemIdx}-${actionableIdx}">
+                          <option value="">A definir</option>
+                          ${membersState
+                            .map(
+                              (member) =>
+                                `<option value="${member.id}" ${member.id === actionable.memberId ? "selected" : ""}>${member.firstName} ${member.lastName}</option>`,
+                            )
+                            .join("")}
+                        </select>
+                        <label class="check-inline">
+                          <input type="checkbox" id="history-actionable-done-${itemIdx}-${actionableIdx}" ${actionable.done ? "checked" : ""}>
+                          <span>Hecho</span>
+                        </label>
+                        <button class="icon-btn" type="button" data-remove-history-actionable="${itemIdx}-${actionableIdx}" aria-label="Eliminar accionable">×</button>
+                      </div>
+                    `,
+                  )
+                  .join("")}
+              </div>
+            </div>
+          </article>
+        `;
+      }
+
       return `
         <article class="resolution-card">
           <div class="resolution-head">
@@ -905,6 +1094,157 @@ function renderMeetingDetail(history) {
     .join("");
 
   elements.meetingDetailList.innerHTML = metaHtml + itemsHtml;
+
+  if (elements.meetingEditBtn) elements.meetingEditBtn.hidden = historyDetailEditMode;
+  if (elements.meetingCancelBtn) elements.meetingCancelBtn.hidden = !historyDetailEditMode;
+  if (elements.meetingSaveBtn) elements.meetingSaveBtn.hidden = !historyDetailEditMode;
+  renderMeetingChangeLog(meeting.changeLog || []);
+}
+
+function renderMeetingChangeLog(changeLog) {
+  if (!elements.meetingChangeLog) return;
+  if (!changeLog.length) {
+    elements.meetingChangeLog.innerHTML = `<p class="empty-note">Sin modificaciones registradas.</p>`;
+    return;
+  }
+
+  elements.meetingChangeLog.innerHTML = changeLog
+    .slice()
+    .reverse()
+    .map(
+      (entry) => `
+        <article class="history-log-entry">
+          <div class="history-log-head">
+            <strong>${entry.author || "Sin autor"}</strong>
+            <span>${formatAuditTimestamp(entry.timestamp)}</span>
+          </div>
+          <p>${(entry.changes || []).join(", ") || "Actualizacion general del acta."}</p>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function syncHistoryDetailStateFromInputs() {
+  if (!historyDetailState) return;
+
+  historyDetailState.title = document.getElementById("history-title")?.value || historyDetailState.title || "";
+  historyDetailState.date = document.getElementById("history-date")?.value || historyDetailState.date || "";
+  historyDetailState.startTime = document.getElementById("history-start-time")?.value || historyDetailState.startTime || "";
+  historyDetailState.status = document.getElementById("history-status")?.value || historyDetailState.status || "";
+  historyDetailState.motivo = document.getElementById("history-motivo")?.value || "";
+  historyDetailState.attendees = (historyDetailState.attendees || [])
+    .map((attendee, index) => ({
+      memberId: document.getElementById(`history-attendee-member-${index}`)?.value || attendee.memberId || "",
+      mode: document.getElementById(`history-attendee-mode-${index}`)?.value || attendee.mode || "Presencial",
+    }))
+    .filter((attendee) => attendee.memberId);
+  historyDetailState.quorum = getQuorumLabel(historyDetailState.attendees);
+  historyDetailState.items = (historyDetailState.items || []).map((item, itemIdx) => ({
+    ...item,
+    title: document.getElementById(`history-item-title-${itemIdx}`)?.value || item.title || "",
+    status: document.getElementById(`history-item-status-${itemIdx}`)?.value || item.status || "No tratado",
+    comments: document.getElementById(`history-item-comments-${itemIdx}`)?.value || "",
+    resolution: document.getElementById(`history-item-resolution-${itemIdx}`)?.value || "",
+    actionables: (item.actionables || [])
+      .map((actionable, actionableIdx) => ({
+        description: document.getElementById(`history-actionable-desc-${itemIdx}-${actionableIdx}`)?.value || actionable.description || "",
+        memberId: document.getElementById(`history-actionable-member-${itemIdx}-${actionableIdx}`)?.value || actionable.memberId || "",
+        done: Boolean(document.getElementById(`history-actionable-done-${itemIdx}-${actionableIdx}`)?.checked),
+      }))
+      .filter((actionable) => actionable.description || actionable.memberId),
+  }));
+}
+
+function setupMeetingDetailActions() {
+  if (!elements.meetingEditBtn || !elements.meetingCancelBtn || !elements.meetingSaveBtn) return;
+
+  elements.meetingEditBtn.addEventListener("click", () => {
+    historyDetailEditMode = true;
+    historyDetailState = deepClone(historyDetailOriginalState);
+    renderMeetingDetail(historyState);
+  });
+
+  elements.meetingCancelBtn.addEventListener("click", () => {
+    historyDetailEditMode = false;
+    historyDetailState = deepClone(historyDetailOriginalState);
+    renderMeetingDetail(historyState);
+  });
+
+  elements.meetingDetailList?.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement) || !historyDetailEditMode || !historyDetailState) return;
+
+    const addAttendeeBtn = target.closest("#addHistoryAttendeeBtn");
+    if (addAttendeeBtn) {
+      syncHistoryDetailStateFromInputs();
+      historyDetailState.attendees.push({ memberId: "", mode: "Presencial" });
+      renderMeetingDetail(historyState);
+      return;
+    }
+
+    const removeAttendeeBtn = target.closest("[data-remove-history-attendee]");
+    if (removeAttendeeBtn) {
+      syncHistoryDetailStateFromInputs();
+      historyDetailState.attendees.splice(Number(removeAttendeeBtn.dataset.removeHistoryAttendee), 1);
+      renderMeetingDetail(historyState);
+      return;
+    }
+
+    const addActionableBtn = target.closest("[data-add-history-actionable]");
+    if (addActionableBtn) {
+      const itemIdx = Number(addActionableBtn.dataset.addHistoryActionable);
+      syncHistoryDetailStateFromInputs();
+      historyDetailState.items[itemIdx].actionables.push({ description: "", memberId: "", done: false });
+      renderMeetingDetail(historyState);
+      return;
+    }
+
+    const removeActionableBtn = target.closest("[data-remove-history-actionable]");
+    if (removeActionableBtn) {
+      const [itemIdx, actionableIdx] = removeActionableBtn.dataset.removeHistoryActionable.split("-").map(Number);
+      syncHistoryDetailStateFromInputs();
+      historyDetailState.items[itemIdx].actionables.splice(actionableIdx, 1);
+      renderMeetingDetail(historyState);
+    }
+  });
+
+  elements.meetingSaveBtn.addEventListener("click", () => {
+    if (!historyDetailState) return;
+
+    syncHistoryDetailStateFromInputs();
+    const changes = summarizeMeetingChanges(historyDetailOriginalState, historyDetailState);
+    if (!changes.length) {
+      historyDetailEditMode = false;
+      renderMeetingDetail(historyState);
+      return;
+    }
+
+    const author = window.prompt("Indicar quien realizo esta modificacion:");
+    if (!author || !author.trim()) return;
+
+    const updatedMeeting = {
+      ...deepClone(historyDetailState),
+      changeLog: [
+        ...(historyDetailOriginalState.changeLog || []),
+        {
+          timestamp: new Date().toISOString(),
+          author: author.trim(),
+          changes,
+        },
+      ],
+    };
+
+    saveHistoryMeeting(updatedMeeting.id, updatedMeeting).then((data) => {
+      historyState = deepClone(data.history || []);
+      historyDetailOriginalState = deepClone(
+        historyState.find((meeting) => meeting.id === updatedMeeting.id) || updatedMeeting,
+      );
+      historyDetailState = deepClone(historyDetailOriginalState);
+      historyDetailEditMode = false;
+      renderMeetingDetail(historyState);
+    });
+  });
 }
 
 // ─── Render: Miembros ──────────────────────────────────────────────────────
@@ -1131,6 +1471,8 @@ async function init() {
     }
 
     if (elements.page === "meeting-detail") {
+      historyState = deepClone(data.history || []);
+      setupMeetingDetailActions();
       renderMeetingDetail(data.history);
       if (elements.printMeetingLink) {
         const searchParams = new URLSearchParams(window.location.search);

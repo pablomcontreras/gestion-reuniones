@@ -31,6 +31,8 @@ La comision se reune los martes de `18:00` a `20:00` en `America/Argentina/Cordo
   - lista reuniones archivadas
 - `detalle-reunion.html`
   - muestra una reunion archivada punto por punto
+  - por defecto es solo lectura
+  - permite habilitar edicion y guardar un log de modificaciones
 - `miembros.html`
   - CRUD simple de miembros
 - `print-agenda.html`
@@ -116,6 +118,7 @@ Cuando la app detecta que ya paso la hora de inicio de la reunion actual:
 - La landing evita informacion tecnica y muestra solo lo indispensable
 - `Ultima reunion` es la pantalla operativa para tomar minuta
 - `Memoria institucional` es un indice; el detalle se consulta en pagina separada
+- Las actas archivadas pueden corregirse desde su detalle, pero cada cambio exige autor y queda registrado
 - Los asistentes se cargan desde la agenda de miembros
 - La carga de asistentes usa un estado borrador para no perder filas nuevas antes de guardar
 
