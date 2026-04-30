@@ -1386,14 +1386,16 @@ function renderPrintMeeting(data) {
     ${attendeesHtml}
   `;
 
+  const toArray = (val) => (Array.isArray(val) ? val : Object.values(val || {}));
+
   // \u2500\u2500 Puntos del orden del dia \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  const items = (meeting.items || []).map((item, idx) => ({
+  const items = toArray(meeting.items).map((item, idx) => ({
     idx: idx + 1,
     title: item.title,
     status: item.status || item.statusLabel || "",
     comments: item.comments || "",
     resolution: item.resolution || "",
-    actionables: item.actionables || [],
+    actionables: toArray(item.actionables),
   }));
 
   const statusClass = (s) => {
