@@ -383,9 +383,7 @@ function syncAttendeesFromDom() {
     if (attendee._pending) return;
     const memberEl = document.getElementById(`attendee-member-${index}`);
     const modeEl = document.getElementById(`attendee-mode-${index}`);
-    if (memberEl && memberEl.value && memberEl.value !== "__new__") {
-      attendee.memberId = memberEl.value;
-    }
+    if (memberEl && memberEl.value !== "__new__") attendee.memberId = memberEl.value;
     if (modeEl) attendee.mode = modeEl.value;
   });
 }
@@ -512,7 +510,11 @@ function syncPreviousMeetingStateFromInputs() {
 
   syncAttendeesFromDom();
   previousMeetingState.attendees = previousMeetingState.attendees.filter(
-    (a) => !a._pending && a.memberId && a.memberId !== "__new__",
+    (a) => {
+      if (a._pending) return true;
+      if (a._draft) return true;
+      return a.memberId && a.memberId !== "__new__";
+    },
   );
 
   const statusEl = document.getElementById("meeting-status");
@@ -563,6 +565,12 @@ function syncPreviousMeetingStateFromInputs() {
 function setupLastMeetingActions() {
   if (!elements.saveMinutesBtn || !elements.archiveMeetingBtn) return;
 
+  const focusAttendeeField = (index) => {
+    window.setTimeout(() => {
+      document.getElementById(`attendee-member-${index}`)?.focus();
+    }, 0);
+  };
+
   // Status dropdown → show/hide motivo section
   elements.previousMeetingMeta?.addEventListener("change", (event) => {
     const target = event.target;
@@ -596,15 +604,21 @@ function setupLastMeetingActions() {
   // Agregar asistente
   elements.addAttendeeBtn?.addEventListener("click", () => {
     syncAttendeesFromDom();
-    previousMeetingState.attendees.push({ memberId: "", mode: "Presencial" });
+    previousMeetingState.attendees.push({ memberId: "", mode: "Presencial", _draft: true });
     renderAttendees(previousMeetingState.attendees);
+    focusAttendeeField(previousMeetingState.attendees.length - 1);
   });
 
   // Seleccionar "+ Nuevo asistente..." en dropdown → modo inline
   elements.attendeesList?.addEventListener("change", (event) => {
     const target = event.target;
-    if (!target.id?.startsWith("attendee-member-") || target.value !== "__new__") return;
+    if (!(target instanceof HTMLElement)) return;
+    if (!target.id?.startsWith("attendee-member-")) return;
     const index = Number(target.id.replace("attendee-member-", ""));
+    if (target.value !== "__new__") {
+      if (previousMeetingState.attendees[index]) previousMeetingState.attendees[index]._draft = false;
+      return;
+    }
     syncAttendeesFromDom();
     previousMeetingState.attendees[index] = { memberId: "", mode: "Presencial", _pending: true };
     renderAttendees(previousMeetingState.attendees);
@@ -628,6 +642,7 @@ function setupLastMeetingActions() {
       previousMeetingState.attendees[index] = {
         memberId: newMember.id,
         mode: document.getElementById(`new-mode-${index}`)?.value || "Presencial",
+        _draft: false,
       };
       renderAttendees(previousMeetingState.attendees);
       return;
@@ -703,7 +718,11 @@ function setupLastMeetingActions() {
   // Save minuta
   elements.saveMinutesBtn.addEventListener("click", () => {
     syncPreviousMeetingStateFromInputs();
+    previousMeetingState.attendees = previousMeetingState.attendees.filter(
+      (attendee) => !attendee._pending && attendee.memberId && attendee.memberId !== "__new__",
+    );
     savePreviousMeeting(previousMeetingState).then(() => {
+      renderAttendees(previousMeetingState.attendees);
       renderStats(computeStats());
       elements.saveMinutesBtn.textContent = "Minuta guardada";
       window.setTimeout(() => {
@@ -716,6 +735,9 @@ function setupLastMeetingActions() {
   elements.archiveMeetingBtn.addEventListener("click", () => {
     if (!window.confirm("\u00bfArchivar esta reunion en la memoria institucional? Esta accion no se puede deshacer.")) return;
     syncPreviousMeetingStateFromInputs();
+    previousMeetingState.attendees = previousMeetingState.attendees.filter(
+      (attendee) => !attendee._pending && attendee.memberId && attendee.memberId !== "__new__",
+    );
     savePreviousMeeting(previousMeetingState)
       .then(() => archivePreviousMeeting())
       .then((data) => {
