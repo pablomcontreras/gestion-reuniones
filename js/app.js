@@ -33,7 +33,6 @@ const elements = {
   printMeetingSubtitle: document.getElementById("printMeetingSubtitle"),
   printMeetingMeta: document.getElementById("printMeetingMeta"),
   printMeetingList: document.getElementById("printMeetingList"),
-  printActionablesSummary: document.getElementById("printActionablesSummary"),
   addAgendaItemBtn: document.getElementById("addAgendaItemBtn"),
   saveAgendaBtn: document.getElementById("saveAgendaBtn"),
   addAttendeeBtn: document.getElementById("addAttendeeBtn"),
@@ -1349,60 +1348,32 @@ function renderPrintMeeting(data) {
   const startTime = meeting.startTime || "";
   const timeLabel = startTime ? ` \u00b7 ${startTime} hs.` : "";
 
-  elements.printMeetingTitle.textContent = title;
-  elements.printMeetingSubtitle.textContent = `${date}${timeLabel}`;
-
-  const toArray = (val) => (Array.isArray(val) ? val : Object.values(val || {}));
-
-  // \u2500\u2500 Encabezado \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  const attendeesList = toArray(meeting.attendees)
-    .map((a) => {
-      const name = getMemberName(a.memberId);
-      return name !== "A definir" ? { name, mode: a.mode || "Presencial" } : null;
-    })
-    .filter(Boolean);
-
-  const presenciales = attendeesList.filter((a) => a.mode === "Presencial");
-  const remotas = attendeesList.filter((a) => a.mode !== "Presencial");
-
-  const chips = [
-    meeting.quorum ? `<div class="print-chip"><span class="print-chip-label">Qu\u00f3rum</span><span class="print-chip-value">${meeting.quorum}</span></div>` : "",
-    meeting.status && meeting.status !== "Archivada"
-      ? `<div class="print-chip"><span class="print-chip-label">Estado</span><span class="print-chip-value">${meeting.status}</span></div>`
-      : "",
-    meeting.motivo ? `<div class="print-chip"><span class="print-chip-label">Motivo</span><span class="print-chip-value">${meeting.motivo}</span></div>` : "",
-  ].filter(Boolean).join("");
-
-  const attendeesHtml = attendeesList.length
-    ? `<div class="print-attendees-block">
-        <div class="print-attendees-label">Asistentes <span class="print-attendees-count">${attendeesList.length}</span></div>
-        <div class="print-attendees-tags">
-          ${presenciales.map((a) => `<span class="print-tag print-tag-presencial">${a.name}</span>`).join("")}
-          ${remotas.map((a) => `<span class="print-tag print-tag-remota">${a.name} \u00b7 remota</span>`).join("")}
-        </div>
-      </div>`
+  const attendees = meeting.attendees
+    ? meeting.attendees
+        .map((a) => {
+          const name = getMemberName(a.memberId);
+          return name !== "A definir" ? `${name} (${a.mode})` : null;
+        })
+        .filter(Boolean)
+        .join(", ")
     : "";
 
+  elements.printMeetingTitle.textContent = title;
+  elements.printMeetingSubtitle.textContent = `${date}${timeLabel}`;
   elements.printMeetingMeta.innerHTML = `
-    ${chips ? `<div class="print-chips-row">${chips}</div>` : ""}
-    ${attendeesHtml}
+    ${attendees ? `<p><strong>Asistentes:</strong> ${attendees}</p>` : ""}
+    ${meeting.quorum ? `<p><strong>Quorum:</strong> ${meeting.quorum}</p>` : ""}
+    ${meeting.status && meeting.status !== "Archivada" ? `<p><strong>Estado:</strong> ${meeting.status}</p>` : ""}
+    ${meeting.motivo ? `<p><strong>Motivo:</strong> ${meeting.motivo}</p>` : ""}
   `;
 
-  // \u2500\u2500 Puntos del orden del dia \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  const items = toArray(meeting.items).map((item, idx) => ({
-    idx: idx + 1,
+  const items = (meeting.items || []).map((item) => ({
     title: item.title,
     status: item.status || item.statusLabel || "",
     comments: item.comments || "",
     resolution: item.resolution || "",
-    actionables: toArray(item.actionables),
+    actionables: item.actionables || [],
   }));
-
-  const statusClass = (s) => {
-    if (s === "Postergado") return "print-status-deferred";
-    if (s === "No tratado") return "print-status-skipped";
-    return "print-status-done";
-  };
 
   elements.printMeetingList.innerHTML = items
     .map(
@@ -1410,71 +1381,28 @@ function renderPrintMeeting(data) {
         <article class="print-item">
           <div class="print-item-head">
             <h2>${item.title}</h2>
-            <span class="print-status ${statusClass(item.status)}">${item.status}</span>
+            <div>${item.status}</div>
           </div>
-          ${item.comments ? `<div class="print-field"><span class="print-field-label">Comentarios</span><p>${item.comments}</p></div>` : ""}
-          ${item.resolution ? `<div class="print-field"><span class="print-field-label">Resoluci\u00f3n</span><p>${item.resolution}</p></div>` : ""}
+          <p><strong>Comentarios:</strong> ${item.comments || "Sin comentarios registrados."}</p>
+          <p><strong>Resolucion:</strong> ${item.resolution || "Sin resolucion registrada."}</p>
           ${
             item.actionables.length
-              ? `<div class="print-field"><span class="print-field-label">Accionables</span>
+              ? `<div><strong>Accionables:</strong>
                   <ul class="print-bullets">
                     ${item.actionables
                       .map(
                         (a) =>
-                          `<li><span class="print-bullet-check">\u25a1</span>${a.description}${a.memberId ? ` \u2014 <em>${getMemberName(a.memberId)}</em>` : ""}${a.done ? ' <span class="print-done-badge">Hecho</span>' : ""}</li>`,
+                          `<li>${a.description}${a.memberId ? ` \u2014 <em>${getMemberName(a.memberId)}</em>` : " \u2014 <em>A definir</em>"}</li>`,
                       )
                       .join("")}
                   </ul>
                 </div>`
-              : ""
+              : "<p><strong>Accionables:</strong> Sin accionables registrados.</p>"
           }
         </article>
       `,
     )
     .join("");
-
-  // \u2500\u2500 Accionables al pie \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  if (!elements.printActionablesSummary) return;
-
-  try {
-    const allActionables = items.flatMap((item) =>
-      item.actionables.map((a) => ({ ...a, pointLabel: `Punto ${item.idx}` })),
-    );
-
-    if (!allActionables.length) {
-      elements.printActionablesSummary.innerHTML = "";
-      return;
-    }
-
-    const pending = allActionables.filter((a) => !a.done);
-    const done = allActionables.filter((a) => a.done);
-
-    const renderRow = (a) => `
-      <div class="print-ar${a.done ? " print-ar-done" : ""}">
-        <span class="print-ar-check">${a.done ? "\u2713" : "\u25a1"}</span>
-        <span class="print-ar-desc">${a.description}</span>
-        <span class="print-ar-who">${a.memberId ? getMemberName(a.memberId) : "A definir"}</span>
-        <span class="print-ar-from">${a.pointLabel}</span>
-      </div>`;
-
-    elements.printActionablesSummary.innerHTML = `
-      <div class="print-af-header">
-        <h2 class="print-af-title">Accionables</h2>
-        ${pending.length ? `<span class="print-af-badge">${pending.length} pendiente${pending.length !== 1 ? "s" : ""}</span>` : '<span class="print-af-badge print-af-badge-ok">Todos completos</span>'}
-      </div>
-      <div class="print-af-legend">
-        <span class="print-af-legend-col">Tarea</span>
-        <span class="print-af-legend-col">Responsable</span>
-        <span class="print-af-legend-col">Punto</span>
-      </div>
-      <div class="print-ar-list">
-        ${pending.map(renderRow).join("")}
-        ${done.map(renderRow).join("")}
-      </div>
-    `;
-  } catch (_) {
-    elements.printActionablesSummary.innerHTML = "";
-  }
 }
 
 function setupPrintAction() {

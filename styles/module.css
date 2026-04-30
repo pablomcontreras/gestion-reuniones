@@ -658,108 +658,20 @@
 }
 
 .print-meta {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
-/* chips de estado/quorum/motivo */
-.print-chips-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 18px;
+.print-meta p {
+  margin: 0 0 8px;
 }
 
-.print-chip {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #f9fafb;
-  min-width: 80px;
-}
-
-.print-chip-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #6b7280;
-}
-
-.print-chip-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #111827;
-}
-
-/* bloque de asistentes */
-.print-attendees-block {
-  border-top: 1px solid #e5e7eb;
-  padding-top: 16px;
-}
-
-.print-attendees-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #6b7280;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.print-attendees-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #111827;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0;
-}
-
-.print-attendees-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.print-tag {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.print-tag-presencial {
-  background: #e8f5e9;
-  color: #1b5e20;
-  border: 1px solid #c8e6c9;
-}
-
-.print-tag-remota {
-  background: #e3f2fd;
-  color: #0d47a1;
-  border: 1px solid #bbdefb;
-}
-
-/* puntos */
 .print-list {
   display: grid;
-  gap: 20px;
+  gap: 18px;
 }
 
 .print-item {
-  padding-bottom: 18px;
+  padding-bottom: 16px;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -767,209 +679,17 @@
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  align-items: center;
-  margin-bottom: 10px;
+  align-items: baseline;
+  margin-bottom: 8px;
 }
 
 .print-item h2 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-/* badges de estado por punto */
-.print-status {
-  flex-shrink: 0;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 9px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.print-status-done {
-  background: #e8f5e9;
-  color: #2d6435;
-}
-
-.print-status-deferred {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.print-status-skipped {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-/* campos de comentarios / resolución */
-.print-field {
-  margin-bottom: 8px;
-}
-
-.print-field-label {
-  display: block;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #6b7280;
-  margin-bottom: 3px;
-}
-
-.print-field p {
-  margin: 0;
-  font-size: 14px;
-  color: #111827;
+  font-size: 18px;
 }
 
 .print-bullets {
-  margin: 6px 0 0 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 6px;
-}
-
-.print-bullets li {
-  font-size: 13px;
-  line-height: 1.5;
-  padding-left: 20px;
-  position: relative;
-}
-
-.print-bullet-check {
-  position: absolute;
-  left: 0;
-  top: 1px;
-  color: #9ca3af;
-  font-size: 12px;
-}
-
-.print-done-badge {
-  font-size: 10px;
-  font-weight: 600;
-  color: #2d6435;
-  background: #e8f5e9;
-  padding: 1px 6px;
-  border-radius: 10px;
-}
-
-/* ── Accionables al pie ──────────────────────────────────────────────────── */
-.print-actionables-footer {
-  margin-top: 36px;
-  border-top: 2px solid #111827;
-  padding-top: 20px;
-}
-
-.print-af-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.print-af-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.print-af-badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 20px;
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.print-af-badge-ok {
-  background: #e8f5e9;
-  color: #2d6435;
-}
-
-.print-af-legend {
-  display: flex;
-  padding: 5px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px 6px 0 0;
-  background: #f3f4f6;
-  margin-bottom: 0;
-}
-
-.print-af-legend-col {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #374151;
-}
-
-.print-af-legend-col:first-child { flex: 1; }
-.print-af-legend-col:nth-child(2) { width: 160px; flex-shrink: 0; }
-.print-af-legend-col:nth-child(3) { width: 80px; flex-shrink: 0; }
-
-.print-ar-list {
-  border: 1px solid #d1d5db;
-  border-top: none;
-  border-radius: 0 0 6px 6px;
-  overflow: visible;
-}
-
-.print-ar {
-  display: flex;
-  align-items: baseline;
-  padding: 8px 10px;
-  border-bottom: 1px solid #f3f4f6;
-  font-size: 13px;
-}
-
-.print-ar:last-child {
-  border-bottom: none;
-}
-
-.print-ar:nth-child(even) {
-  background: #f9fafb;
-}
-
-.print-ar-done {
-  color: #9ca3af;
-  text-decoration: line-through;
-}
-
-.print-ar-done .print-ar-check {
-  color: #2d6435;
-  text-decoration: none;
-}
-
-.print-ar-check {
-  flex-shrink: 0;
-  width: 20px;
-  font-size: 13px;
-  color: #9ca3af;
-  text-decoration: none !important;
-}
-
-.print-ar-desc {
-  flex: 1;
-  font-weight: 500;
-}
-
-.print-ar-who {
-  flex-shrink: 0;
-  width: 160px;
-  font-size: 12px;
-  color: #374151;
-}
-
-.print-ar-from {
-  flex-shrink: 0;
-  width: 80px;
-  font-size: 11px;
-  color: #6b7280;
-  font-weight: 600;
+  margin: 8px 0 0 18px;
 }
 
 @media print {
@@ -1009,16 +729,6 @@
   .print-meta {
     page-break-after: avoid;
     break-after: avoid;
-  }
-
-  .print-actionables-footer {
-    margin-top: 32px;
-  }
-
-  .print-tag-presencial,
-  .print-tag-remota,
-  .print-chip {
-    border: 1px solid #d1d5db;
   }
 }
 
