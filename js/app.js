@@ -1352,8 +1352,10 @@ function renderPrintMeeting(data) {
   elements.printMeetingTitle.textContent = title;
   elements.printMeetingSubtitle.textContent = `${date}${timeLabel}`;
 
+  const toArray = (val) => (Array.isArray(val) ? val : Object.values(val || {}));
+
   // \u2500\u2500 Encabezado \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  const attendeesList = (meeting.attendees || [])
+  const attendeesList = toArray(meeting.attendees)
     .map((a) => {
       const name = getMemberName(a.memberId);
       return name !== "A definir" ? { name, mode: a.mode || "Presencial" } : null;
@@ -1385,8 +1387,6 @@ function renderPrintMeeting(data) {
     ${chips ? `<div class="print-chips-row">${chips}</div>` : ""}
     ${attendeesHtml}
   `;
-
-  const toArray = (val) => (Array.isArray(val) ? val : Object.values(val || {}));
 
   // \u2500\u2500 Puntos del orden del dia \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const items = toArray(meeting.items).map((item, idx) => ({
@@ -1436,41 +1436,45 @@ function renderPrintMeeting(data) {
   // \u2500\u2500 Accionables al pie \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   if (!elements.printActionablesSummary) return;
 
-  const allActionables = items.flatMap((item) =>
-    item.actionables.map((a) => ({ ...a, pointLabel: `Punto ${item.idx}` })),
-  );
+  try {
+    const allActionables = items.flatMap((item) =>
+      item.actionables.map((a) => ({ ...a, pointLabel: `Punto ${item.idx}` })),
+    );
 
-  if (!allActionables.length) {
+    if (!allActionables.length) {
+      elements.printActionablesSummary.innerHTML = "";
+      return;
+    }
+
+    const pending = allActionables.filter((a) => !a.done);
+    const done = allActionables.filter((a) => a.done);
+
+    const renderRow = (a) => `
+      <div class="print-ar${a.done ? " print-ar-done" : ""}">
+        <span class="print-ar-check">${a.done ? "\u2713" : "\u25a1"}</span>
+        <span class="print-ar-desc">${a.description}</span>
+        <span class="print-ar-who">${a.memberId ? getMemberName(a.memberId) : "A definir"}</span>
+        <span class="print-ar-from">${a.pointLabel}</span>
+      </div>`;
+
+    elements.printActionablesSummary.innerHTML = `
+      <div class="print-af-header">
+        <h2 class="print-af-title">Accionables</h2>
+        ${pending.length ? `<span class="print-af-badge">${pending.length} pendiente${pending.length !== 1 ? "s" : ""}</span>` : '<span class="print-af-badge print-af-badge-ok">Todos completos</span>'}
+      </div>
+      <div class="print-af-legend">
+        <span class="print-af-legend-col">Tarea</span>
+        <span class="print-af-legend-col">Responsable</span>
+        <span class="print-af-legend-col">Punto</span>
+      </div>
+      <div class="print-ar-list">
+        ${pending.map(renderRow).join("")}
+        ${done.map(renderRow).join("")}
+      </div>
+    `;
+  } catch (_) {
     elements.printActionablesSummary.innerHTML = "";
-    return;
   }
-
-  const pending = allActionables.filter((a) => !a.done);
-  const done = allActionables.filter((a) => a.done);
-
-  const renderRow = (a) => `
-    <div class="print-ar${a.done ? " print-ar-done" : ""}">
-      <span class="print-ar-check">${a.done ? "\u2713" : "\u25a1"}</span>
-      <span class="print-ar-desc">${a.description}</span>
-      <span class="print-ar-who">${a.memberId ? getMemberName(a.memberId) : "A definir"}</span>
-      <span class="print-ar-from">${a.pointLabel}</span>
-    </div>`;
-
-  elements.printActionablesSummary.innerHTML = `
-    <div class="print-af-header">
-      <h2 class="print-af-title">Accionables</h2>
-      ${pending.length ? `<span class="print-af-badge">${pending.length} pendiente${pending.length !== 1 ? "s" : ""}</span>` : '<span class="print-af-badge print-af-badge-ok">Todos completos</span>'}
-    </div>
-    <div class="print-af-legend">
-      <span class="print-af-legend-col">Tarea</span>
-      <span class="print-af-legend-col">Responsable</span>
-      <span class="print-af-legend-col">Punto</span>
-    </div>
-    <div class="print-ar-list">
-      ${pending.map(renderRow).join("")}
-      ${done.map(renderRow).join("")}
-    </div>
-  `;
 }
 
 function setupPrintAction() {
