@@ -1,7 +1,7 @@
 import { moduleConfig } from "./config.js";
 
 const STORAGE_KEY = "dandelion-meetings-state";
-const STORAGE_VERSION = 8;
+const STORAGE_VERSION = 9;
 
 const mockData = {
   meta: {
@@ -316,6 +316,18 @@ function normalizeMeetingItemFromAgenda(point) {
   };
 }
 
+function normalizePreviousMeetingItem(item) {
+  return {
+    title: item?.title || "",
+    treated: item?.treated ?? item?.statusLabel === "Tratado",
+    statusLabel: item?.statusLabel || item?.status || "No tratado",
+    comments: item?.comments || "",
+    resolution: item?.resolution || "",
+    hasActionables: item?.hasActionables ?? Boolean((item?.actionables || []).length),
+    actionables: cloneData(item?.actionables || []),
+  };
+}
+
 function normalizeHistoryItemFromMeeting(item) {
   return {
     title: item.title || "",
@@ -323,6 +335,53 @@ function normalizeHistoryItemFromMeeting(item) {
     comments: item.comments || "",
     resolution: item.resolution || "",
     actionables: cloneData(item.actionables || []),
+  };
+}
+
+function normalizePreviousMeeting(meeting, fallbackNumber = 1) {
+  const normalizedItems = (meeting?.items || []).map(normalizePreviousMeetingItem);
+  return {
+    number: Number(meeting?.number || fallbackNumber),
+    dateLabel: meeting?.dateLabel || "",
+    startTime: meeting?.startTime || `${String(moduleConfig.meetingStartHour).padStart(2, "0")}:00`,
+    status: meeting?.status || "Pendiente de cierre definitivo",
+    motivo: meeting?.motivo || "",
+    attendees: cloneData(meeting?.attendees || []),
+    items: normalizedItems,
+  };
+}
+
+function normalizeHistoryMeeting(meeting) {
+  const attendees = cloneData(meeting?.attendees || []);
+  return {
+    id: meeting?.id || `reunion-${meeting?.number || Date.now()}`,
+    title: meeting?.title || `Reunion N° ${meeting?.number || ""}`.trim(),
+    date: meeting?.date || meeting?.dateLabel || "",
+    startTime: meeting?.startTime || "",
+    attendees,
+    quorum: meeting?.quorum || `${attendees.length} ${attendees.length === 1 ? "asistente" : "asistentes"}`,
+    status: meeting?.status || "",
+    motivo: meeting?.motivo || "",
+    items: (meeting?.items || []).map(normalizeHistoryItemFromMeeting),
+  };
+}
+
+function normalizeModuleData(data) {
+  const members = cloneData(data?.members || []);
+  const nextAgendaPoints = cloneData(data?.nextAgenda?.points || []).map(normalizeAgendaPoint);
+  const previousMeeting = normalizePreviousMeeting(data?.previousMeeting, 1);
+  const history = (data?.history || []).map(normalizeHistoryMeeting);
+
+  return {
+    meta: {
+      lastRolloverMeetingKey: data?.meta?.lastRolloverMeetingKey || null,
+    },
+    members,
+    nextAgenda: {
+      points: nextAgendaPoints,
+    },
+    previousMeeting,
+    history,
   };
 }
 
@@ -344,7 +403,7 @@ function archiveMeetingSnapshot(meeting) {
 }
 
 function rolloverMeetingsIfNeeded(data) {
-  const working = cloneData(data);
+  const working = normalizeModuleData(data);
   working.meta = working.meta || { lastRolloverMeetingKey: null };
 
   const { nowInZone, currentMeeting, currentMeetingKey } = computeCurrentMeetingWindow();
@@ -443,12 +502,12 @@ export async function getModuleData() {
   if (moduleConfig.useMocks || !moduleConfig.apiBaseUrl) {
     const stored = readStoredData();
     if (stored) {
-      const rolled = rolloverMeetingsIfNeeded(stored);
+      const rolled = rolloverMeetingsIfNeeded(normalizeModuleData(stored));
       writeStoredData(rolled);
       return Promise.resolve(rolled);
     }
 
-    const initialData = getInitialData();
+    const initialData = normalizeModuleData(getInitialData());
     const rolled = rolloverMeetingsIfNeeded(initialData);
     writeStoredData(rolled);
     return Promise.resolve(rolled);
@@ -458,13 +517,13 @@ export async function getModuleData() {
 
   if (!remote) {
     // Primera vez: inicializar Firebase con los datos de ejemplo
-    const initialData = rolloverMeetingsIfNeeded(getInitialData());
+    const initialData = rolloverMeetingsIfNeeded(normalizeModuleData(getInitialData()));
     await firebasePut(initialData);
     writeStoredData(initialData);
     return initialData;
   }
 
-  const rolled = rolloverMeetingsIfNeeded(remote);
+  const rolled = rolloverMeetingsIfNeeded(normalizeModuleData(remote));
   if (JSON.stringify(rolled) !== JSON.stringify(remote)) {
     await firebasePut(rolled);
   }

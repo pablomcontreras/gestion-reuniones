@@ -379,6 +379,7 @@ function renderAttendees(attendees) {
 
 function syncAttendeesFromDom() {
   if (!previousMeetingState) return;
+  previousMeetingState.attendees = previousMeetingState.attendees || [];
   previousMeetingState.attendees.forEach((attendee, index) => {
     if (attendee._pending) return;
     const memberEl = document.getElementById(`attendee-member-${index}`);
@@ -508,6 +509,8 @@ function renderResolutions(items) {
 function syncPreviousMeetingStateFromInputs() {
   if (!previousMeetingState) return;
 
+  previousMeetingState.attendees = previousMeetingState.attendees || [];
+  previousMeetingState.items = previousMeetingState.items || [];
   syncAttendeesFromDom();
   previousMeetingState.attendees = previousMeetingState.attendees.filter(
     (a) => {
@@ -1112,7 +1115,9 @@ async function init() {
     }
 
     if (elements.page === "last-meeting") {
-      previousMeetingState = JSON.parse(JSON.stringify(data.previousMeeting));
+      previousMeetingState = JSON.parse(JSON.stringify(data.previousMeeting || { attendees: [], items: [] }));
+      previousMeetingState.attendees = previousMeetingState.attendees || [];
+      previousMeetingState.items = previousMeetingState.items || [];
       renderStats(computeStats());
       renderPreviousMeetingMeta(previousMeetingState);
       renderAttendees(previousMeetingState.attendees);
