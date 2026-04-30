@@ -108,7 +108,9 @@ function getNextMeetingInfo() {
   const isLocked = daysUntilMeeting === 0 && nowInZone >= currentCutoff && nowInZone < unlockAt;
 
   const displayedMeeting = new Date(currentMeeting);
-  if (daysUntilMeeting === 0 && nowInZone >= unlockAt) {
+  if (daysUntilMeeting === 0 && nowInZone >= currentMeeting) {
+    displayedMeeting.setUTCDate(displayedMeeting.getUTCDate() + 7);
+  } else if (daysUntilMeeting === 0 && nowInZone >= unlockAt) {
     displayedMeeting.setUTCDate(displayedMeeting.getUTCDate() + 7);
   }
 
@@ -445,6 +447,11 @@ function renderResolutions(items) {
           </div>
 
           <div class="resolution-block">
+            <div class="resolution-label">Comentarios</div>
+            <textarea class="agenda-input agenda-textarea compact-textarea" id="resolution-comments-${itemIdx}" rows="3">${item.comments || ""}</textarea>
+          </div>
+
+          <div class="resolution-block">
             <div class="resolution-label">Resolucion / Salida</div>
             <textarea class="agenda-input agenda-textarea compact-textarea" id="resolution-text-${itemIdx}" rows="3">${item.resolution}</textarea>
           </div>
@@ -542,6 +549,7 @@ function syncPreviousMeetingStateFromInputs() {
         title: titleEl?.value ?? item.title,
         treated: statusLabel === "Tratado",
         statusLabel,
+        comments: document.getElementById(`resolution-comments-${itemIdx}`)?.value ?? item.comments ?? "",
         resolution: resolutionEl?.value ?? item.resolution,
         hasActionables,
         actionables,
@@ -842,6 +850,10 @@ function renderMeetingDetail(history) {
             }">${item.status || ""}</span>
           </div>
           <div class="resolution-block">
+            <div class="resolution-label">Comentarios</div>
+            <p>${item.comments || "Sin comentarios registrados."}</p>
+          </div>
+          <div class="resolution-block">
             <div class="resolution-label">Resolucion</div>
             <p>${item.resolution || "Sin resolucion registrada."}</p>
           </div>
@@ -993,6 +1005,7 @@ function renderPrintMeeting(data) {
   const items = (meeting.items || []).map((item) => ({
     title: item.title,
     status: item.status || item.statusLabel || "",
+    comments: item.comments || "",
     resolution: item.resolution || "",
     actionables: item.actionables || [],
   }));
@@ -1005,6 +1018,7 @@ function renderPrintMeeting(data) {
             <h2>${item.title}</h2>
             <div>${item.status}</div>
           </div>
+          <p><strong>Comentarios:</strong> ${item.comments || "Sin comentarios registrados."}</p>
           <p><strong>Resolucion:</strong> ${item.resolution || "Sin resolucion registrada."}</p>
           ${
             item.actionables.length

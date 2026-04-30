@@ -1,9 +1,12 @@
 import { moduleConfig } from "./config.js";
 
 const STORAGE_KEY = "dandelion-meetings-state";
-const STORAGE_VERSION = 5;
+const STORAGE_VERSION = 8;
 
 const mockData = {
+  meta: {
+    lastRolloverMeetingKey: null,
+  },
   members: [
     { id: "m1", firstName: "Maximiliano", lastName: "Contreras", phone: "+54 9 3517 53-8199" },
     { id: "m2", firstName: "Lucas", lastName: "Di Stefano", phone: "+54 9 3513 00-3693" },
@@ -16,11 +19,7 @@ const mockData = {
     { id: "m9", firstName: "Yuliana", lastName: "Longhi", phone: "+54 9 3513 64-5612" },
   ],
   nextAgenda: {
-    points: [
-      { title: "Apertura y lectura del acta anterior", description: "" },
-      { title: "Encuadre legal e impositivo del Marketplace", description: "Punto postergado de la reunion anterior, incorporado con prioridad." },
-      { title: "Organigrama de la Comision", description: "Presentacion del borrador elaborado por Maximiliano Contreras." },
-    ],
+    points: [],
   },
   previousMeeting: {
     number: 2,
@@ -38,6 +37,7 @@ const mockData = {
         title: "Punto 1 \u2014 Apertura y seguimiento de acuerdos",
         treated: true,
         statusLabel: "Tratado",
+        comments: "Se revisaron los acuerdos vigentes y el pedido a la Comision Economica.",
         resolution: "Solicitar informe o participacion de Comision Economica en la proxima reunion.",
         hasActionables: true,
         actionables: [
@@ -48,6 +48,7 @@ const mockData = {
         title: "Punto 2 \u2014 Tienda Diente de Leon: primera entrega con TiendaNube y validacion QR",
         treated: true,
         statusLabel: "Tratado",
+        comments: "Se identifico la falta de señal como principal cuello de botella operativo.",
         resolution: "Ines evaluara la viabilidad de una validacion asincronica. Queda pendiente definir responsable para carteleria.",
         hasActionables: true,
         actionables: [
@@ -59,6 +60,7 @@ const mockData = {
         title: "Punto 3 \u2014 Organigrama de la Comision",
         treated: true,
         statusLabel: "Tratado",
+        comments: "Se considero necesario mapear roles antes de sumar nuevas personas.",
         resolution: "Maxi elaborara un primer borrador de organigrama para la Reunion N\u00b0 3.",
         hasActionables: true,
         actionables: [
@@ -69,6 +71,7 @@ const mockData = {
         title: "Punto 4 \u2014 Encuadre legal e impositivo del Marketplace",
         treated: false,
         statusLabel: "Postergado",
+        comments: "No se trato por falta de tiempo y por requerir mayor participacion.",
         resolution: "Se incorpora con prioridad al orden del dia de la Reunion N\u00b0 3.",
         hasActionables: false,
         actionables: [],
@@ -77,6 +80,7 @@ const mockData = {
         title: "Punto 5 \u2014 Participacion de miembros no presenciales",
         treated: true,
         statusLabel: "Tratado",
+        comments: "Se aclaro que la agenda efectiva inicia a las 18:45 luego del espacio intercomisiones.",
         resolution: "Se habilita videollamada a demanda para quienes la necesiten en reuniones especificas.",
         hasActionables: false,
         actionables: [],
@@ -85,6 +89,7 @@ const mockData = {
         title: "Punto 6 \u2014 SEF: activacion comunitaria",
         treated: true,
         statusLabel: "Tratado",
+        comments: "Se planteo la necesidad de una comunicacion formal y un evento de activacion.",
         resolution: "Avanzar con una comunicacion formal a la comunidad y planificar un evento de activacion.",
         hasActionables: true,
         actionables: [
@@ -112,6 +117,7 @@ const mockData = {
         {
           title: "Punto 1 \u2014 Apertura y seguimiento de acuerdos",
           status: "Tratado",
+          comments: "Se revisaron los acuerdos vigentes y el pedido a la Comision Economica.",
           resolution: "Solicitar informe o participacion de Comision Economica en la proxima reunion.",
           actionables: [
             { description: "Contactar Comision Economica y solicitar espacio en Reunion N\u00b0 3.", memberId: "m1", done: false },
@@ -120,6 +126,7 @@ const mockData = {
         {
           title: "Punto 2 \u2014 Tienda Diente de Leon: primera entrega con TiendaNube y validacion QR",
           status: "Tratado",
+          comments: "Se detecto la falta de señal como principal dificultad operativa.",
           resolution: "Revisar alternativa asincronica y asignar responsable de carteleria.",
           actionables: [
             { description: "Evaluar validacion asincronica sin conexion.", memberId: "m8", done: false },
@@ -129,6 +136,7 @@ const mockData = {
         {
           title: "Punto 3 \u2014 Organigrama de la Comision",
           status: "Tratado",
+          comments: "Se definio preparar un borrador de organigrama para la reunion siguiente.",
           resolution: "Presentar borrador en la Reunion N\u00b0 3.",
           actionables: [
             { description: "Preparar borrador de organigrama.", memberId: "m1", done: false },
@@ -137,18 +145,21 @@ const mockData = {
         {
           title: "Punto 4 \u2014 Encuadre legal e impositivo del Marketplace",
           status: "Postergado",
+          comments: "No se trato por falta de tiempo y por requerir mayor participacion.",
           resolution: "Retomar con prioridad en la proxima reunion.",
           actionables: [],
         },
         {
           title: "Punto 5 \u2014 Participacion de miembros no presenciales",
           status: "Tratado",
+          comments: "Se habilito la participacion remota por videollamada a demanda.",
           resolution: "Se mantiene modalidad remota a demanda.",
           actionables: [],
         },
         {
           title: "Punto 6 \u2014 SEF: activacion comunitaria",
           status: "Tratado",
+          comments: "Se propuso avanzar con una comunicacion formal y un evento de activacion.",
           resolution: "Definir responsables y canal de comunicacion.",
           actionables: [
             { description: "Asignar responsable para comunicacion formal.", memberId: "", done: false },
@@ -170,18 +181,21 @@ const mockData = {
         {
           title: "Punto 1 \u2014 Apertura y definicion de agenda",
           status: "Tratado",
+          comments: "Se establecieron prioridades iniciales de trabajo.",
           resolution: "Se fijaron los temas prioritarios iniciales.",
           actionables: [],
         },
         {
           title: "Punto 2 \u2014 Encuadre legal del marketplace",
           status: "Postergado",
+          comments: "El tema quedo pendiente para una reunion posterior con mas informacion.",
           resolution: "Retomar con mas informacion disponible.",
           actionables: [],
         },
         {
           title: "Punto 3 \u2014 Reunion virtual intermedia",
           status: "Tratado",
+          comments: "Se dejo abierta la votacion para la reunion siguiente.",
           resolution: "Reabrir debate en la Reunion N\u00b0 2.",
           actionables: [],
         },
@@ -198,13 +212,180 @@ function getInitialData() {
   return cloneData(mockData);
 }
 
+function getZonedDateParts(date, timeZone) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(date);
+  const values = Object.fromEntries(
+    parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]),
+  );
+
+  return {
+    year: Number(values.year),
+    month: Number(values.month),
+    day: Number(values.day),
+    hour: Number(values.hour),
+    minute: Number(values.minute),
+    second: Number(values.second),
+  };
+}
+
+function getCurrentZonedDate(timeZone) {
+  const now = new Date();
+  const parts = getZonedDateParts(now, timeZone);
+  return new Date(Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second));
+}
+
+function getWeekdayInTimeZone(date, timeZone) {
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    weekday: "short",
+  }).format(date);
+
+  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(weekday);
+}
+
+function formatMeetingDateLabel(date) {
+  const text = new Intl.DateTimeFormat("es-AR", {
+    timeZone: "UTC",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function formatMeetingKey(date) {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function computeCurrentMeetingWindow() {
+  const nowInZone = getCurrentZonedDate(moduleConfig.meetingTimezone);
+  const zonedWeekday = getWeekdayInTimeZone(new Date(), moduleConfig.meetingTimezone);
+  const daysUntilMeeting = (moduleConfig.meetingWeekday - zonedWeekday + 7) % 7;
+
+  const thisWeekMeeting = new Date(nowInZone);
+  thisWeekMeeting.setUTCDate(thisWeekMeeting.getUTCDate() + daysUntilMeeting);
+  thisWeekMeeting.setUTCHours(moduleConfig.meetingStartHour, 0, 0, 0);
+
+  if (daysUntilMeeting > 0) {
+    thisWeekMeeting.setUTCDate(thisWeekMeeting.getUTCDate() - 7);
+  }
+
+  const nextMeeting = new Date(thisWeekMeeting);
+  nextMeeting.setUTCDate(nextMeeting.getUTCDate() + 7);
+
+  return {
+    nowInZone,
+    currentMeeting: thisWeekMeeting,
+    currentMeetingKey: formatMeetingKey(thisWeekMeeting),
+    nextMeeting,
+  };
+}
+
+function normalizeAgendaPoint(point) {
+  return {
+    title: point.title || "",
+    description: point.description || "",
+  };
+}
+
+function normalizeMeetingItemFromAgenda(point) {
+  return {
+    title: point.title || "",
+    treated: false,
+    statusLabel: "No tratado",
+    comments: point.description || "",
+    resolution: "",
+    hasActionables: false,
+    actionables: [],
+  };
+}
+
+function normalizeHistoryItemFromMeeting(item) {
+  return {
+    title: item.title || "",
+    status: item.statusLabel || item.status || "No tratado",
+    comments: item.comments || "",
+    resolution: item.resolution || "",
+    actionables: cloneData(item.actionables || []),
+  };
+}
+
+function archiveMeetingSnapshot(meeting) {
+  if (!meeting || !meeting.number) return null;
+
+  const attendeeCount = (meeting.attendees || []).length;
+  return {
+    id: `reunion-${meeting.number}`,
+    title: `Reunion N° ${meeting.number}`,
+    date: meeting.dateLabel,
+    startTime: meeting.startTime || "",
+    attendees: cloneData(meeting.attendees || []),
+    quorum: `${attendeeCount} ${attendeeCount === 1 ? "asistente" : "asistentes"}`,
+    status: meeting.status || "",
+    motivo: meeting.motivo || "",
+    items: (meeting.items || []).map(normalizeHistoryItemFromMeeting),
+  };
+}
+
+function rolloverMeetingsIfNeeded(data) {
+  const working = cloneData(data);
+  working.meta = working.meta || { lastRolloverMeetingKey: null };
+
+  const { nowInZone, currentMeeting, currentMeetingKey } = computeCurrentMeetingWindow();
+  if (nowInZone < currentMeeting) return working;
+  if (working.meta.lastRolloverMeetingKey === currentMeetingKey) return working;
+
+  const archived = archiveMeetingSnapshot(working.previousMeeting);
+  if (archived) {
+    const existingHistory = working.history || [];
+    working.history = [
+      archived,
+      ...existingHistory.filter((item) => item.id !== archived.id),
+    ];
+  }
+
+  const nextMeetingNumber = Number(working.previousMeeting?.number || 0) + 1;
+  const agendaPoints = (working.nextAgenda?.points || []).map(normalizeAgendaPoint);
+
+  working.previousMeeting = {
+    number: nextMeetingNumber,
+    dateLabel: formatMeetingDateLabel(currentMeeting),
+    startTime: `${String(moduleConfig.meetingStartHour).padStart(2, "0")}:00`,
+    status: "Pendiente de cierre definitivo",
+    motivo: "",
+    attendees: [],
+    items: agendaPoints.map(normalizeMeetingItemFromAgenda),
+  };
+
+  working.nextAgenda = { points: [] };
+  working.meta.lastRolloverMeetingKey = currentMeetingKey;
+
+  return working;
+}
+
 function readStoredData() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
 
   try {
     const parsed = JSON.parse(raw);
-    if (!parsed || parsed.version !== STORAGE_VERSION || !parsed.data) {
+    if (!parsed || !parsed.data) {
       return null;
     }
     return parsed.data;
@@ -261,25 +442,34 @@ async function firebasePut(data) {
 export async function getModuleData() {
   if (moduleConfig.useMocks || !moduleConfig.apiBaseUrl) {
     const stored = readStoredData();
-    if (stored) return Promise.resolve(stored);
+    if (stored) {
+      const rolled = rolloverMeetingsIfNeeded(stored);
+      writeStoredData(rolled);
+      return Promise.resolve(rolled);
+    }
 
     const initialData = getInitialData();
-    writeStoredData(initialData);
-    return Promise.resolve(initialData);
+    const rolled = rolloverMeetingsIfNeeded(initialData);
+    writeStoredData(rolled);
+    return Promise.resolve(rolled);
   }
 
   const remote = await firebaseGet();
 
   if (!remote) {
     // Primera vez: inicializar Firebase con los datos de ejemplo
-    const initialData = getInitialData();
+    const initialData = rolloverMeetingsIfNeeded(getInitialData());
     await firebasePut(initialData);
     writeStoredData(initialData);
     return initialData;
   }
 
-  writeStoredData(remote);
-  return remote;
+  const rolled = rolloverMeetingsIfNeeded(remote);
+  if (JSON.stringify(rolled) !== JSON.stringify(remote)) {
+    await firebasePut(rolled);
+  }
+  writeStoredData(rolled);
+  return rolled;
 }
 
 export async function saveNextAgenda(points) {
@@ -354,6 +544,7 @@ export async function archivePreviousMeeting() {
     items: previousMeeting.items.map((item) => ({
       title: item.title,
       status: item.statusLabel,
+      comments: item.comments || "",
       resolution: item.resolution || "",
       actionables: cloneData(item.actionables || []),
     })),
