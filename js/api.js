@@ -385,11 +385,10 @@ function normalizeModuleData(data) {
   const history = historyArray
     .filter(
       (meeting) =>
+        // Descarta nulos, no-objetos y entradas vacías (sin fecha ni id real)
         meeting &&
         typeof meeting === "object" &&
-        // Descarta entradas vacías: debe tener date/dateLabel Y number real (> 0)
-        (meeting.date || meeting.dateLabel) &&
-        Number(meeting.number) > 0,
+        (meeting.date || meeting.dateLabel || (meeting.id && meeting.id !== "reunion-")),
     )
     .map(normalizeHistoryMeeting);
 
