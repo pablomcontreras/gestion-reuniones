@@ -1,6 +1,6 @@
-import { signInWithGoogle, isAllowedEmail, logout } from "./auth.js";
+import { signInWithGoogle, isAllowedEmail } from "./auth.js";
 import { auth } from "./firebase.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { moduleConfig } from "./config.js";
 
 const btn = document.getElementById("googleSignInBtn");
@@ -29,8 +29,8 @@ btn?.addEventListener("click", async () => {
     const email = result.user?.email || "";
 
     if (!isAllowedEmail(email)) {
-      // Cerrar sesion inmediatamente y mostrar error
-      await logout();
+      // Cerrar sesion sin redirigir, para poder mostrar el mensaje de error en esta misma pagina
+      await signOut(auth);
       errorEl.textContent = `Solo pueden ingresar cuentas ${moduleConfig.allowedDomain}`;
       btn.disabled = false;
       btn.textContent = "Ingresar con Google";

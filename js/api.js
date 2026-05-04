@@ -372,8 +372,25 @@ function normalizeModuleData(data) {
   const members = cloneData(data?.members || []);
   const nextAgendaPoints = cloneData(data?.nextAgenda?.points || []).map(normalizeAgendaPoint);
   const previousMeeting = normalizePreviousMeeting(data?.previousMeeting, 1);
-  const history = (data?.history || [])
-    .filter((meeting) => meeting && typeof meeting === "object" && (meeting.id || meeting.title || meeting.date || meeting.dateLabel))
+
+  // Firebase RTDB puede devolver arrays con huecos como objetos {0:{...}, 3:{...}}
+  // cuando se eliminan entradas desde la consola. Convertimos a array primero.
+  const historyRaw = data?.history;
+  const historyArray = Array.isArray(historyRaw)
+    ? historyRaw
+    : historyRaw && typeof historyRaw === "object"
+      ? Object.values(historyRaw)
+      : [];
+
+  const history = historyArray
+    .filter(
+      (meeting) =>
+        meeting &&
+        typeof meeting === "object" &&
+        // Descarta entradas vacías: debe tener date/dateLabel Y number real (> 0)
+        (meeting.date || meeting.dateLabel) &&
+        Number(meeting.number) > 0,
+    )
     .map(normalizeHistoryMeeting);
 
   return {
