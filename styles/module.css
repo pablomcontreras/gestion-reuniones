@@ -660,9 +660,16 @@
 }
 
 .login-copy {
-  margin: 0 0 28px;
+  margin: 0 0 8px;
   font-size: 13px;
   color: var(--muted);
+}
+
+.login-domain-hint {
+  margin: 0 0 24px;
+  font-size: 12px;
+  color: var(--muted);
+  opacity: 0.75;
 }
 
 .login-google-btn {
