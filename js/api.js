@@ -392,6 +392,21 @@ function normalizeModuleData(data) {
     )
     .map(normalizeHistoryMeeting);
 
+  // Salvaguarda: si previousMeeting está archivada pero no aparece en el historial
+  // (p.ej. porque se borraron entradas desde la consola de Firebase), la re-inserta.
+  const prevArchived =
+    previousMeeting.status === "Archivada" &&
+    previousMeeting.number &&
+    previousMeeting.dateLabel;
+  if (prevArchived) {
+    const prevId = `reunion-${previousMeeting.number}`;
+    const alreadyInHistory = history.some((h) => h.id === prevId);
+    if (!alreadyInHistory) {
+      const recovered = archiveMeetingSnapshot(previousMeeting);
+      if (recovered) history.unshift(recovered);
+    }
+  }
+
   return {
     meta: {
       lastRolloverMeetingKey: data?.meta?.lastRolloverMeetingKey || null,
