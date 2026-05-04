@@ -1,5 +1,6 @@
 import { archivePreviousMeeting, getModuleData, saveHistoryMeeting, saveMembers, saveNextAgenda, savePreviousMeeting } from "./api.js";
 import { moduleConfig } from "./config.js";
+import { requireAuth, logout } from "./auth.js";
 
 const elements = {
   page: document.body.dataset.page,
@@ -1409,6 +1410,33 @@ function setupPrintAction() {
   elements.printNowBtn?.addEventListener("click", () => window.print());
 }
 
+// ─── Sidebar usuario ───────────────────────────────────────────────────────
+
+function renderSidebarUser(user) {
+  const sidebar = elements.sidebar;
+  if (!sidebar) return;
+
+  const name = user.displayName || user.email || "Usuario";
+  const email = user.email || "";
+  const photo = user.photoURL
+    ? `<img class="sidebar-user-avatar" src="${user.photoURL}" alt="${name}" referrerpolicy="no-referrer">`
+    : `<div class="sidebar-user-avatar-placeholder">${name.charAt(0).toUpperCase()}</div>`;
+
+  const el = document.createElement("div");
+  el.className = "sidebar-user";
+  el.innerHTML = `
+    ${photo}
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name">${name}</div>
+      <div class="sidebar-user-email">${email}</div>
+    </div>
+    <button class="sidebar-logout-btn" id="logoutBtn" title="Cerrar sesion" type="button">↩</button>
+  `;
+  sidebar.appendChild(el);
+
+  document.getElementById("logoutBtn")?.addEventListener("click", logout);
+}
+
 // ─── Sidebar ───────────────────────────────────────────────────────────────
 
 function setupSidebar() {
@@ -1439,6 +1467,10 @@ function setupSidebar() {
 async function init() {
   document.title = `${moduleConfig.moduleName} | ${moduleConfig.schoolName}`;
   setupSidebar();
+
+  // Guard: redirige a login si no hay sesion activa
+  const user = await requireAuth();
+  renderSidebarUser(user);
 
   try {
     const data = await getModuleData();

@@ -1,4 +1,5 @@
 import { moduleConfig } from "./config.js";
+import { getAuthToken } from "./auth.js";
 
 const STORAGE_KEY = "dandelion-meetings-state";
 const STORAGE_VERSION = 9;
@@ -467,18 +468,19 @@ function writeStoredData(data) {
 
 // --- Firebase REST helpers ---
 
-function firebaseUrl() {
-  return `${moduleConfig.apiBaseUrl}.json`;
+async function firebaseUrl() {
+  const token = await getAuthToken();
+  return `${moduleConfig.apiBaseUrl}.json?auth=${token}`;
 }
 
 async function firebaseGet() {
-  const response = await fetch(firebaseUrl());
+  const response = await fetch(await firebaseUrl());
   if (!response.ok) throw new Error(`Firebase GET fallo: ${response.status}`);
   return response.json();
 }
 
 async function firebasePatch(partial) {
-  const response = await fetch(firebaseUrl(), {
+  const response = await fetch(await firebaseUrl(), {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(partial),
@@ -488,7 +490,7 @@ async function firebasePatch(partial) {
 }
 
 async function firebasePut(data) {
-  const response = await fetch(firebaseUrl(), {
+  const response = await fetch(await firebaseUrl(), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
