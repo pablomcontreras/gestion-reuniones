@@ -372,7 +372,9 @@ function normalizeModuleData(data) {
   const members = cloneData(data?.members || []);
   const nextAgendaPoints = cloneData(data?.nextAgenda?.points || []).map(normalizeAgendaPoint);
   const previousMeeting = normalizePreviousMeeting(data?.previousMeeting, 1);
-  const history = (data?.history || []).map(normalizeHistoryMeeting);
+  const history = (data?.history || [])
+    .filter((meeting) => meeting && typeof meeting === "object" && (meeting.id || meeting.title || meeting.date || meeting.dateLabel))
+    .map(normalizeHistoryMeeting);
 
   return {
     meta: {
@@ -617,11 +619,17 @@ export async function archivePreviousMeeting() {
     data = await firebaseGet() || readStoredData() || getInitialData();
   }
 
-  const previousMeeting = data.previousMeeting;
+  const previousMeeting = normalizePreviousMeeting(data.previousMeeting, 1);
+  const archiveId = `reunion-${previousMeeting.number}`;
+  if (previousMeeting.status === "Archivada") {
+    data.previousMeeting = previousMeeting;
+    writeStoredData(data);
+    return Promise.resolve(data);
+  }
   const attendeeCount = (previousMeeting.attendees || []).length;
 
   const archiveEntry = {
-    id: `reunion-${previousMeeting.number}`,
+    id: archiveId,
     title: `Reunion N\u00b0 ${previousMeeting.number}`,
     date: previousMeeting.dateLabel,
     startTime: previousMeeting.startTime || "",
@@ -639,7 +647,10 @@ export async function archivePreviousMeeting() {
     changeLog: [],
   };
 
-  const newHistory = [archiveEntry, ...(data.history || [])];
+  const newHistory = [
+    archiveEntry,
+    ...((data.history || []).filter((meeting) => meeting && meeting.id !== archiveId)),
+  ];
   const updatedPreviousMeeting = { ...cloneData(previousMeeting), status: "Archivada" };
 
   if (moduleConfig.useMocks || !moduleConfig.apiBaseUrl) {

@@ -15,6 +15,7 @@ La comision se reune los martes de `18:00` a `20:00` en `America/Argentina/Cordo
 
 - Frontend estatico: `HTML`, `CSS`, `JavaScript` vanilla
 - Persistencia compartida: `Firebase Realtime Database`
+- Autenticacion: `Firebase Authentication` con Google
 - Hosting: `GitHub Pages`
 - Repo fuente: `https://github.com/pablomcontreras/gestion-reuniones`
 
@@ -113,12 +114,18 @@ Cuando la app detecta que ya paso la hora de inicio de la reunion actual:
 3. deja `nextAgenda` en blanco
 4. marca la reunion como ya procesada en `meta.lastRolloverMeetingKey`
 
+### Acceso
+
+- Solo pueden ingresar usuarios autenticados con cuenta Google del dominio `@dandelion.edu.ar`
+- El token de autenticacion se usa para leer y escribir en Firebase
+
 ## Decisiones UX actuales
 
 - La landing evita informacion tecnica y muestra solo lo indispensable
 - `Ultima reunion` es la pantalla operativa para tomar minuta
 - `Memoria institucional` es un indice; el detalle se consulta en pagina separada
 - Las actas archivadas pueden corregirse desde su detalle, pero cada cambio exige autor y queda registrado
+- El archivado desde `Ultima reunion` debe ser unico por reunion; no se deben generar duplicados en `history`
 - Los asistentes se cargan desde la agenda de miembros
 - La carga de asistentes usa un estado borrador para no perder filas nuevas antes de guardar
 

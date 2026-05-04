@@ -357,6 +357,7 @@ function renderPreviousMeetingMeta(previousMeeting) {
   if (!elements.previousMeetingMeta) return;
 
   const isNoCelebrada = previousMeeting.status === "No celebrada";
+  const isArchived = previousMeeting.status === "Archivada";
 
   elements.previousMeetingMeta.innerHTML = `
     <div class="meeting-meta-static">
@@ -379,6 +380,7 @@ function renderPreviousMeetingMeta(previousMeeting) {
         <option value="Pendiente de cierre definitivo" ${previousMeeting.status === "Pendiente de cierre definitivo" ? "selected" : ""}>Pendiente de cierre definitivo</option>
         <option value="No celebrada" ${isNoCelebrada ? "selected" : ""}>No celebrada</option>
         <option value="Cerrada" ${previousMeeting.status === "Cerrada" ? "selected" : ""}>Cerrada</option>
+        <option value="Archivada" ${isArchived ? "selected" : ""}>Archivada</option>
       </select>
     </label>
     <div id="motivoSection" ${!isNoCelebrada ? "hidden" : ""} style="margin-top:10px;">
@@ -391,6 +393,19 @@ function renderPreviousMeetingMeta(previousMeeting) {
       </div>
     </div>
   `;
+}
+
+function updateLastMeetingActionState() {
+  const isArchived = previousMeetingState?.status === "Archivada";
+  if (elements.saveMinutesBtn) {
+    elements.saveMinutesBtn.disabled = Boolean(isArchived);
+    elements.saveMinutesBtn.textContent = isArchived ? "Minuta archivada" : "Guardar minuta";
+  }
+  if (elements.archiveMeetingBtn) {
+    elements.archiveMeetingBtn.disabled = Boolean(isArchived);
+    elements.archiveMeetingBtn.textContent = isArchived ? "Ya archivada" : "Archivar en memoria institucional";
+  }
+  if (elements.addAttendeeBtn) elements.addAttendeeBtn.disabled = Boolean(isArchived);
 }
 
 // ─── Render: Asistentes (dropdown) ─────────────────────────────────────────
@@ -655,6 +670,7 @@ function setupLastMeetingActions() {
   // Archive as "No celebrada"
   elements.previousMeetingMeta?.addEventListener("click", (event) => {
     if (event.target.id !== "archiveNoCelebradaBtn") return;
+    if (previousMeetingState?.status === "Archivada") return;
     syncPreviousMeetingStateFromInputs();
     if (!previousMeetingState.motivo?.trim()) {
       window.alert("Por favor indica el motivo de la reunion no celebrada.");
@@ -669,12 +685,13 @@ function setupLastMeetingActions() {
         renderActionablesSummary();
         renderResolutions(previousMeetingState.items);
         renderStats(computeStats());
-        elements.archiveMeetingBtn.textContent = "Archivada";
+        updateLastMeetingActionState();
       });
   });
 
   // Agregar asistente
   elements.addAttendeeBtn?.addEventListener("click", () => {
+    if (previousMeetingState?.status === "Archivada") return;
     syncAttendeesFromDom();
     previousMeetingState.attendees.push({ memberId: "", mode: "Presencial", _draft: true });
     renderAttendees(previousMeetingState.attendees);
@@ -789,6 +806,7 @@ function setupLastMeetingActions() {
 
   // Save minuta
   elements.saveMinutesBtn.addEventListener("click", () => {
+    if (previousMeetingState?.status === "Archivada") return;
     syncPreviousMeetingStateFromInputs();
     previousMeetingState.attendees = previousMeetingState.attendees.filter(
       (attendee) => !attendee._pending && attendee.memberId && attendee.memberId !== "__new__",
@@ -798,13 +816,14 @@ function setupLastMeetingActions() {
       renderStats(computeStats());
       elements.saveMinutesBtn.textContent = "Minuta guardada";
       window.setTimeout(() => {
-        elements.saveMinutesBtn.textContent = "Guardar minuta";
+        updateLastMeetingActionState();
       }, 1200);
     });
   });
 
   // Archive normal
   elements.archiveMeetingBtn.addEventListener("click", () => {
+    if (previousMeetingState?.status === "Archivada") return;
     if (!window.confirm("\u00bfArchivar esta reunion en la memoria institucional? Esta accion no se puede deshacer.")) return;
     syncPreviousMeetingStateFromInputs();
     previousMeetingState.attendees = previousMeetingState.attendees.filter(
@@ -819,7 +838,7 @@ function setupLastMeetingActions() {
         renderActionablesSummary();
         renderResolutions(previousMeetingState.items);
         renderStats(computeStats());
-        elements.archiveMeetingBtn.textContent = "Archivada";
+        updateLastMeetingActionState();
       });
   });
 }
@@ -1406,8 +1425,32 @@ function renderPrintMeeting(data) {
     .join("");
 }
 
+async function triggerPrint() {
+  if (document.fonts?.ready) {
+    try {
+      await document.fonts.ready;
+    } catch (_error) {
+      // noop
+    }
+  }
+
+  await new Promise((resolve) => window.requestAnimationFrame(() => resolve()));
+  await new Promise((resolve) => window.requestAnimationFrame(() => resolve()));
+  await new Promise((resolve) => window.setTimeout(resolve, 180));
+  window.print();
+}
+
 function setupPrintAction() {
-  elements.printNowBtn?.addEventListener("click", () => window.print());
+  elements.printNowBtn?.addEventListener("click", async () => {
+    elements.printNowBtn.disabled = true;
+    elements.printNowBtn.textContent = "Preparando impresion...";
+    await triggerPrint();
+    window.setTimeout(() => {
+      if (!elements.printNowBtn) return;
+      elements.printNowBtn.disabled = false;
+      elements.printNowBtn.textContent = "Imprimir / Guardar PDF";
+    }, 400);
+  });
 }
 
 // ─── Sidebar usuario ───────────────────────────────────────────────────────
@@ -1496,6 +1539,7 @@ async function init() {
       renderResolutions(previousMeetingState.items);
       renderActionablesSummary();
       setupLastMeetingActions();
+      updateLastMeetingActionState();
     }
 
     if (elements.page === "history") {

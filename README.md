@@ -6,6 +6,7 @@ La version publicada usa:
 
 - `HTML + CSS + JavaScript` vanilla
 - `Firebase Realtime Database` como persistencia compartida
+- `Firebase Authentication` con Google
 - `GitHub Pages` como hosting del frontend
 
 ## Flujo operativo vigente
@@ -25,6 +26,7 @@ Reglas de negocio activas:
    - el orden del dia vigente pasa a `Ultima reunion`
    - `Inicio` queda apuntando a la reunion siguiente
    - el orden del dia de `Inicio` se resetea en blanco
+4. Una reunion archivada no debe volver a archivarse desde `Ultima reunion`; cualquier correccion posterior se hace desde `Memoria institucional`, con trazabilidad.
 
 ## Estructura principal
 
@@ -42,6 +44,7 @@ Reglas de negocio activas:
 ## Estado actual
 
 - Persistencia remota activa con `useMocks: false`
+- Acceso restringido a usuarios autenticados con dominio `@dandelion.edu.ar`
 - Agenda de miembros reutilizada para asistentes y responsables de accionables
 - Actas con separacion por punto entre `Comentarios`, `Resolucion / salida` y `Accionables`
 - Versiones imprimibles preparadas para papel / PDF
