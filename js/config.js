@@ -4,6 +4,7 @@ export const moduleConfig = {
   environment: "separate",
   apiBaseUrl: "https://dandelion-reuniones-default-rtdb.firebaseio.com/data",
   useMocks: false,
+  allowedDomain: "@dandelion.edu.ar",
   meetingTimezone: "America/Argentina/Cordoba",
   meetingWeekday: 2,
   meetingStartHour: 18,
