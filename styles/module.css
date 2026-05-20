@@ -600,6 +600,12 @@
   outline: none;
 }
 
+.resolution-card .agenda-input-title::placeholder {
+  color: var(--muted);
+  font-weight: 400;
+  opacity: 1;
+}
+
 .checklist-select {
   width: 220px;
 }

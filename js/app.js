@@ -1019,7 +1019,7 @@ function renderMeetingDetail(history) {
         return `
           <article class="resolution-card">
             <div class="resolution-head">
-              <input class="agenda-input agenda-input-title" id="history-item-title-${itemIdx}" type="text" value="${item.title || ""}">
+              <input class="agenda-input agenda-input-title" id="history-item-title-${itemIdx}" type="text" value="${item.title || ""}" placeholder="Titulo del punto...">
               <select class="agenda-input resolution-select" id="history-item-status-${itemIdx}">
                 <option value="Tratado" ${item.status === "Tratado" ? "selected" : ""}>Tratado</option>
                 <option value="No tratado" ${item.status === "No tratado" ? "selected" : ""}>No tratado</option>
