@@ -1113,7 +1113,13 @@ function renderMeetingDetail(history) {
     })
     .join("");
 
-  elements.meetingDetailList.innerHTML = metaHtml + itemsHtml;
+  const addItemBtnHtml = historyDetailEditMode
+    ? `<div class="agenda-actions" style="margin-top:12px;">
+         <button class="action-btn" id="addHistoryItemBtn" type="button">+ Agregar punto al orden del dia</button>
+       </div>`
+    : "";
+
+  elements.meetingDetailList.innerHTML = metaHtml + itemsHtml + addItemBtnHtml;
 
   if (elements.meetingEditBtn) elements.meetingEditBtn.hidden = historyDetailEditMode;
   if (elements.meetingCancelBtn) elements.meetingCancelBtn.hidden = !historyDetailEditMode;
@@ -1194,6 +1200,16 @@ function setupMeetingDetailActions() {
   elements.meetingDetailList?.addEventListener("click", (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement) || !historyDetailEditMode || !historyDetailState) return;
+
+    const addItemBtn = target.closest("#addHistoryItemBtn");
+    if (addItemBtn) {
+      syncHistoryDetailStateFromInputs();
+      historyDetailState.items.push({ title: "", status: "No tratado", comments: "", resolution: "", actionables: [] });
+      renderMeetingDetail(historyState);
+      const newIdx = historyDetailState.items.length - 1;
+      document.getElementById(`history-item-title-${newIdx}`)?.focus();
+      return;
+    }
 
     const addAttendeeBtn = target.closest("#addHistoryAttendeeBtn");
     if (addAttendeeBtn) {
